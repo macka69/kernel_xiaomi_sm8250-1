@@ -1688,8 +1688,6 @@ config HWCONF_MANAGER
 	default y if BOARD_XIAOMI
 	help
 	  It provides all kinds of components configuration information and
-	  monitor values.
-	  
-endmenu
+	  monitor values.	  
 
 source "nethunter/Kconfig"
