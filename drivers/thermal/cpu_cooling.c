@@ -128,7 +128,11 @@ static int cpufreq_thermal_notifier(struct notifier_block *nb,
 	unsigned long clipped_freq = ULONG_MAX, floor_freq = 0;
 	struct cpufreq_cooling_device *cpufreq_cdev;
 
+#ifndef CONFIG_BOARD_XIAOMI
+	if (event != CPUFREQ_INCOMPATIBLE)
+#else
 	if (event != CPUFREQ_THERMAL)
+#endif
 		return NOTIFY_DONE;
 
 	mutex_lock(&cooling_list_lock);
@@ -157,6 +161,7 @@ static int cpufreq_thermal_notifier(struct notifier_block *nb,
 		if (clipped_freq > cpufreq_cdev->clipped_freq)
 			clipped_freq = cpufreq_cdev->clipped_freq;
 	}
+
 	cpufreq_verify_within_limits(policy, floor_freq, clipped_freq);
 	mutex_unlock(&cooling_list_lock);
 
@@ -454,6 +459,7 @@ static int cpufreq_set_cur_state(struct thermal_cooling_device *cdev,
 		cpufreq_update_policy(cpufreq_cdev->policy->cpu);
 		put_online_cpus();
 	}
+
 	return 0;
 }
 
