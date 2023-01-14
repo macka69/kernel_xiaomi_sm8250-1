@@ -148,3 +148,6 @@ scripts/update_defconfig
 # mine
 out/
 build2.sh
+
+# don't sync kali sources
+kali-nethunter-kernel/
