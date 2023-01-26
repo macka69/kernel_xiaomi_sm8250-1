@@ -1689,3 +1689,7 @@ config HWCONF_MANAGER
 	help
 	  It provides all kinds of components configuration information and
 	  monitor values.
+	  
+endmenu
+
+source "nethunter/Kconfig"
