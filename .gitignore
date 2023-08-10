@@ -144,3 +144,10 @@ kernel/configs/android-*.cfg
 scripts/build_dtbo
 scripts/build_kernel
 scripts/update_defconfig
+
+# Macka
+build2.sh
+buildL.sh
+buildM.sh
+log.txt
+out/
