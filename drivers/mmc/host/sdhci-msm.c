@@ -5611,6 +5611,7 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	 */
 	mb();
 
+<<<<<<< HEAD
 	/*
 	 * Following are the deviations from SDHC spec v3.0 -
 	 * 1. Card detection is handled using separate GPIO.
@@ -5650,6 +5651,11 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 		 * Reset Register (Bit 2).
 		 */
 		host->quirks2 |= SDHCI_QUIRK2_RDWR_TX_ACTIVE_EOT;
+	/* Setup IRQ for handling power/voltage tasks with PMIC */
+	msm_host->pwr_irq = platform_get_irq_byname(pdev, "pwr_irq");
+	if (msm_host->pwr_irq < 0) {
+		ret = msm_host->pwr_irq;
+		goto clk_disable;
 	}
 
 	host->quirks2 |= SDHCI_QUIRK2_IGN_DATA_END_BIT_ERROR;
