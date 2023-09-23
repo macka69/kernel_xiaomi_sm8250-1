@@ -3052,10 +3052,6 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
 	if (vma->vm_flags & VM_SHARED)
 		return VM_FAULT_SIGBUS;
 
-	/* Do not check unstable pmd, if it's changed will retry later */
-	if (vmf->flags & FAULT_FLAG_SPECULATIVE)
-		goto skip_pmd_checks;
-
 	/*
 	 * Use pte_alloc() instead of pte_alloc_map().  We can't run
 	 * pte_offset_map() on pmds where a huge pmd might be created
@@ -3164,10 +3160,6 @@ static vm_fault_t __do_fault(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
 	vm_fault_t ret;
-
-	/* Do not check unstable pmd, if it's changed will retry later */
-	if (vmf->flags & FAULT_FLAG_SPECULATIVE)
-		goto skip_pmd_checks;
 
 	/*
 	 * Preallocate pte before we take page_lock because this might lead to
@@ -3938,10 +3930,6 @@ static vm_fault_t wp_huge_pud(struct vm_fault *vmf, pud_t orig_pud)
 static vm_fault_t handle_pte_fault(struct vm_fault *vmf)
 {
 	pte_t entry;
-
-	/* Do not check unstable pmd, if it's changed will retry later */
-	if (vmf->flags & FAULT_FLAG_SPECULATIVE)
-		goto skip_pmd_checks;
 
 	if (unlikely(pmd_none(*vmf->pmd))) {
 		/*
