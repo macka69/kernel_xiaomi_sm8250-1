@@ -313,7 +313,6 @@ struct sock_common {
   *	@sk_cgrp_data: cgroup data for this cgroup
   *	@sk_memcg: this socket's memory cgroup association
   *	@sk_write_pending: a write to stream socket waits to start
-  *	@sk_wait_pending: number of threads blocked on this socket
   *	@sk_state_change: callback to indicate change in the state of the sock
   *	@sk_data_ready: callback to indicate there is data to be processed
   *	@sk_write_space: callback to indicate there is bf sending space available
@@ -394,7 +393,6 @@ struct sock {
 	unsigned int		sk_napi_id;
 #endif
 	int			sk_rcvbuf;
-	int			sk_wait_pending;
 
 	struct sk_filter __rcu	*sk_filter;
 	union {
@@ -478,9 +476,6 @@ struct sock {
 	spinlock_t		sk_peer_lock;
 #else
 	/* sk_peer_lock is in the ANDROID_KABI_RESERVE(1) field below */
-#endif
-#if IS_ENABLED(CONFIG_MIHW)
-	pid_t			pid_num;
 #endif
 	struct pid		*sk_peer_pid;
 	const struct cred	*sk_peer_cred;
@@ -840,9 +835,6 @@ enum sock_flags {
 	SOCK_SELECT_ERR_QUEUE, /* Wake select on error queue */
 	SOCK_RCU_FREE, /* wait rcu grace period in sk_destruct() */
 	SOCK_TXTIME,
-#ifdef CONFIG_MPTCP
-	SOCK_MPTCP, /* MPTCP set on this socket */
-#endif
 };
 
 #define SK_FLAGS_TIMESTAMP ((1UL << SOCK_TIMESTAMP) | (1UL << SOCK_TIMESTAMPING_RX_SOFTWARE))
@@ -1044,7 +1036,6 @@ static inline void sock_rps_reset_rxhash(struct sock *sk)
 
 #define sk_wait_event(__sk, __timeo, __condition, __wait)		\
 	({	int __rc;						\
-		__sk->sk_wait_pending++;				\
 		release_sock(__sk);					\
 		__rc = __condition;					\
 		if (!__rc) {						\
@@ -1054,7 +1045,6 @@ static inline void sock_rps_reset_rxhash(struct sock *sk)
 		}							\
 		sched_annotate_sleep();					\
 		lock_sock(__sk);					\
-		__sk->sk_wait_pending--;				\
 		__rc = __condition;					\
 		__rc;							\
 	})
@@ -1161,16 +1151,12 @@ struct proto {
 	void			(*rehash)(struct sock *sk);
 	int			(*get_port)(struct sock *sk, unsigned short snum);
 
-#ifdef CONFIG_MPTCP
-	void			(*clear_sk)(struct sock *sk, int size);
-#endif
-
 	/* Keeping track of sockets in use */
 #ifdef CONFIG_PROC_FS
 	unsigned int		inuse_idx;
 #endif
 
-	bool			(*stream_memory_free)(const struct sock *sk, int wake);
+	bool			(*stream_memory_free)(const struct sock *sk);
 	bool			(*stream_memory_read)(const struct sock *sk);
 	/* Memory pressure */
 	void			(*enter_memory_pressure)(struct sock *sk);
@@ -1253,29 +1239,19 @@ static inline void sk_refcnt_debug_release(const struct sock *sk)
 #define sk_refcnt_debug_release(sk) do { } while (0)
 #endif /* SOCK_REFCNT_DEBUG */
 
-static inline bool __sk_stream_memory_free(const struct sock *sk, int wake)
+static inline bool sk_stream_memory_free(const struct sock *sk)
 {
 	if (sk->sk_wmem_queued >= sk->sk_sndbuf)
 		return false;
 
 	return sk->sk_prot->stream_memory_free ?
-		sk->sk_prot->stream_memory_free(sk, wake) : true;
-}
-
-static inline bool sk_stream_memory_free(const struct sock *sk)
-{
-	return __sk_stream_memory_free(sk, 0);
-}
-
-static inline bool __sk_stream_is_writeable(const struct sock *sk, int wake)
-{
-	return sk_stream_wspace(sk) >= sk_stream_min_wspace(sk) &&
-	       __sk_stream_memory_free(sk, wake);
+		sk->sk_prot->stream_memory_free(sk) : true;
 }
 
 static inline bool sk_stream_is_writeable(const struct sock *sk)
 {
-	return __sk_stream_is_writeable(sk, 0);
+	return sk_stream_wspace(sk) >= sk_stream_min_wspace(sk) &&
+	       sk_stream_memory_free(sk);
 }
 
 static inline int sk_under_cgroup_hierarchy(struct sock *sk,
