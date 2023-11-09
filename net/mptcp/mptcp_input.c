@@ -1005,7 +1005,7 @@ static int mptcp_queue_skb(struct sock *sk)
 		/* Quick ACK if more 3/4 of the receive window is filled */
 		if (after64(tp->mptcp->map_data_seq,
 			    rcv_nxt64 + 3 * (tcp_receive_window(meta_tp) >> 2)))
-			tcp_dec_quickack_mode(sk, TCP_MAX_QUICKACKS);
+			tcp_dec_quickack_mode(sk);
 
 	} else {
 		/* Ready for the meta-rcv-queue */
