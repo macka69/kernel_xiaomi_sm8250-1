@@ -386,7 +386,6 @@ struct cam_req_mgr_core_link {
 	uint64_t                             prev_sof_timestamp;
 	bool                                 dual_trigger;
 	uint32_t    trigger_cnt[CAM_REQ_MGR_MAX_TRIGGERS];
-
 	uint64_t                             last_applied_jiffies;
 };
 

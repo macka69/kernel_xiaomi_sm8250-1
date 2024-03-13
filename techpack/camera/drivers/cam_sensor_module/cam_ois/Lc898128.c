@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
- * Copyright (C) 2020 XiaoMi, Inc.
+ * Copyright (C) 2021 XiaoMi, Inc.
  */
 
 #include <linux/module.h>
 #include <linux/firmware.h>
+#include <linux/dma-contiguous.h>
 #include <cam_sensor_cmn_header.h>
 #include "cam_ois_core.h"
 #include "cam_ois_soc.h"
@@ -15,7 +16,6 @@
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
 #include "Lc898128.h"
-#include <linux/vmalloc.h>
 
 const uint8_t PACT1Tbl[] = { 0x20, 0xDF };	/* [ACT_02][ACT_01][ACT_03] */
 
@@ -1254,7 +1254,7 @@ uint8_t download_fw(
 	const char                        *fw_name = NULL;
 	struct device                     *dev = &(o_ctrl->pdev->dev);
 	struct cam_sensor_i2c_reg_setting  i2c_reg_setting;
-	void                              *vaddr = NULL;
+	struct page                       *page = NULL;
 
 	fw_addr = addr;
 	fw_name = firmware_name;
@@ -1269,18 +1269,18 @@ uint8_t download_fw(
 		i2c_reg_setting.data_type = CAMERA_SENSOR_I2C_TYPE_BYTE;
 		i2c_reg_setting.size = total_bytes;
 		i2c_reg_setting.delay = 0;
-		fw_size = sizeof(struct cam_sensor_i2c_reg_array) * total_bytes;
-		vaddr = vmalloc(fw_size);
-
-		if (!vaddr) {
-		    CAM_ERR(CAM_OIS,
-		    "Failed in allocating i2c_array: fw_size: %u", fw_size);
+		fw_size = PAGE_ALIGN(sizeof(struct cam_sensor_i2c_reg_array) *
+			total_bytes) >> PAGE_SHIFT;
+		page = cma_alloc(dev_get_cma_area((o_ctrl->soc_info.dev)),
+			fw_size, 0, GFP_KERNEL);
+		if (!page) {
+			CAM_ERR(CAM_OIS, "Failed in allocating i2c_array");
 			release_firmware(fw);
 			return -ENOMEM;
 		}
 
-		i2c_reg_setting.reg_setting = (struct cam_sensor_i2c_reg_array *) vaddr;
-
+		i2c_reg_setting.reg_setting = (struct cam_sensor_i2c_reg_array *) (
+			page_address(page));
 		ptr = (uint8_t *)fw->data;
 		if (read_data) {
 			for (i = 0; i < read_length; i++) {
@@ -1313,9 +1313,9 @@ uint8_t download_fw(
 				}
 			}
 		}
-
-		vfree(vaddr);
-		vaddr = NULL;
+		cma_release(dev_get_cma_area((o_ctrl->soc_info.dev)),
+			page, fw_size);
+		page = NULL;
 		fw_size = 0;
 		release_firmware(fw);
 	}
