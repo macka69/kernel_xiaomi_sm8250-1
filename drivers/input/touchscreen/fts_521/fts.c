@@ -3715,14 +3715,14 @@ static void fts_enter_pointer_event_handler(struct fts_ts_info *info,
 		input_report_key(info->input_dev, BTN_TOOL_FINGER, 1);
 
 	/*input_report_abs(info->input_dev, ABS_MT_TRACKING_ID, touchId); */
-		input_report_abs(info->input_dev, ABS_MT_POSITION_X, x);
-		input_report_abs(info->input_dev, ABS_MT_POSITION_Y, y);
-		if (info->big_area_fod) {
-			input_report_abs(info->input_dev, ABS_MT_TOUCH_MAJOR, info->width_major);
-			input_report_abs(info->input_dev, ABS_MT_TOUCH_MINOR, info->width_minor);
-			input_report_abs(info->input_dev, ABS_MT_ORIENTATION, info->orientation);
-		}
-		input_report_abs(info->input_dev, ABS_MT_DISTANCE, distance);
+	input_report_abs(info->input_dev, ABS_MT_POSITION_X, x);
+	input_report_abs(info->input_dev, ABS_MT_POSITION_Y, y);
+	if (info->big_area_fod) {
+		input_report_abs(info->input_dev, ABS_MT_TOUCH_MAJOR, info->width_major);
+		input_report_abs(info->input_dev, ABS_MT_TOUCH_MINOR, info->width_minor);
+		input_report_abs(info->input_dev, ABS_MT_ORIENTATION, info->orientation);
+	}
+	input_report_abs(info->input_dev, ABS_MT_DISTANCE, distance);
 #ifdef CONFIG_TOUCHSCREEN_FOD
 		if (fts_is_in_fodarea(x, y) && !(info->fod_id & ~(1 << touchId))) {
 			__set_bit(touchId, &info->sleep_finger);
