@@ -135,3 +135,9 @@ all.config
 
 # fetched Android config fragments
 kernel/configs/android-*.cfg
+
+# Mine (go away git)
+Bnc.sh
+build.sh
+log.txt
+out/
