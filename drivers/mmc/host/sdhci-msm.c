@@ -5611,7 +5611,6 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	 */
 	mb();
 
-<<<<<<< HEAD
 	/*
 	 * Following are the deviations from SDHC spec v3.0 -
 	 * 1. Card detection is handled using separate GPIO.
