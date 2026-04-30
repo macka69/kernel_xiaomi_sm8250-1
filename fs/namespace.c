@@ -1139,7 +1139,7 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	// We keep checking for ksu process
 	if (susfs_is_current_ksu_domain()) {
-		mnt = alloc_vfsmnt(name);
+		mnt = susfs_alloc_sus_vfsmnt(fc->source ?: "none");
 		goto bypass_orig_flow;
 	}
 #endif
