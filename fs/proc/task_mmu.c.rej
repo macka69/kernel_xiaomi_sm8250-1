@@ -1,0 +1,28 @@
+--- fs/proc/task_mmu.c
++++ fs/proc/task_mmu.c
+@@ -21,6 +21,9 @@
+ #include <linux/pkeys.h>
+ #include <linux/mm_inline.h>
+ #include <linux/ctype.h>
++#if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)
++#include <linux/susfs_def.h>
++#endif // #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)
+ 
+ #include <asm/elf.h>
+ #include <asm/tlb.h>
+@@ -1703,6 +1796,15 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
+ 		if (ret)
+ 			goto out_free;
+ 		ret = walk_page_range(start_vaddr, end, &pagemap_walk);
++#ifdef CONFIG_KSU_SUSFS_SUS_MAP
++		vma = find_vma(mm, start_vaddr);
++		if (vma && vma->vm_file) {
++			struct inode *inode = file_inode(vma->vm_file);
++			if (SUSFS_IS_INODE_SUS_MAP(inode)) {
++				pm.buffer->pme = 0;
++			}
++		}
++#endif
+ 		up_read(&mm->mmap_sem);
+ 		start_vaddr = end;
+ 
